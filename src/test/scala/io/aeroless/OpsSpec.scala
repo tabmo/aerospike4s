@@ -195,7 +195,7 @@ class OpsSpec extends FlatSpec with Matchers with BeforeAndAfterAll with GivenWh
 
   "Aggregate operation" should "work" in {
     val key = keydomain("test", "setAggregateOps")("Aggregate_Ops")
-    val aggregateFunction = AggregateFunction(
+    val aggregateFunction = AggregateFunction[Int](
       path = "persons.lua",
       pack = "persons",
       funName = "filterByAge"
@@ -206,9 +206,7 @@ class OpsSpec extends FlatSpec with Matchers with BeforeAndAfterAll with GivenWh
       _ <- createIndex("test", "setAggregateOps", "age", IndexType.NUMERIC)
       _ <- put(key, Person("Romain", 28))
       _ <- put(key, Person("Bob", 33))
-      r <- query(statement[Person]("test", "setAggregateOps").onRange("age", 10, 40).aggregate(aggregateFunction)(
-        Value.get(30)
-      ))
+      r <- query(statement[Person]("test", "setAggregateOps").onRange("age", 10, 40).aggregate(aggregateFunction)(30))
       _ <- removeUdf("persons.lua")
     } yield r.map(_._2)
 
