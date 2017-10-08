@@ -18,10 +18,10 @@ class DslSpec extends FlatSpec with Matchers {
   )
 
   val program = (
-    field("name")(Decoder[String]),
-    field("age")(Decoder[Long]),
+    field[String]("name"),
+    field[Long]("age"),
     field("details") {
-      field("city")(Decoder[String])
+      field[String]("city")
     }
   ).tupled
 
