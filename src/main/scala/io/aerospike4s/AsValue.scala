@@ -1,4 +1,4 @@
-package io.aeroless
+package io.aerospike4s
 
 import scala.collection.JavaConverters._
 

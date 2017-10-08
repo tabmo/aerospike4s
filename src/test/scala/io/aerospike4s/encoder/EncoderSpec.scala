@@ -1,8 +1,8 @@
-package io.aeroless.encoder
+package io.aerospike4s.encoder
 
 import org.scalatest.{FlatSpec, Matchers}
 
-import io.aeroless.{AsLong, AsNull, AsString, AsValue}
+import io.aerospike4s.{AsLong, AsNull, AsString, AsValue}
 
 class EncoderSpec extends FlatSpec with Matchers {
   import cats.implicits._

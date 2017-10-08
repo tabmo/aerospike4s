@@ -1,10 +1,10 @@
-package io.aeroless
+package io.aerospike4s
 
 import com.aerospike.client.query.IndexType
 import com.aerospike.client._
 
 import cats.MonadError
-import io.aeroless.AerospikeIO.{Bind, FMap, Fail, Join}
+import io.aerospike4s.AerospikeIO.{Bind, FMap, Fail, Join}
 
 abstract class AerospikeIO[A] { self =>
   def map[B](f: A => B): AerospikeIO[B] = FMap(this, f)

@@ -1,4 +1,4 @@
-package io.aeroless
+package io.aerospike4s
 
 import scala.concurrent.{ExecutionContext, Future, Promise, blocking}
 
@@ -7,7 +7,7 @@ import com.aerospike.client.{AerospikeException, Key, Record}
 
 import cats.data.Kleisli
 import cats.{MonadError, ~>}
-import io.aeroless.AerospikeIO.{Add, Append, Bind, CreateIndex, Delete, DropIndex, Exists, FMap, Fail, Get, GetAll, Header, Join, Operate, Prepend, Pure, Put, Query, RegisterUDF, RemoveUDF, ScanAll, Touch}
+import io.aerospike4s.AerospikeIO.{Add, Append, Bind, CreateIndex, Delete, DropIndex, Exists, FMap, Fail, Get, GetAll, Header, Join, Operate, Prepend, Pure, Put, Query, RegisterUDF, RemoveUDF, ScanAll, Touch}
 
 object KleisliInterpreter {
 

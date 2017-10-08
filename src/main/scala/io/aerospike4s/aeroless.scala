@@ -8,11 +8,11 @@ import com.aerospike.client._
 import com.aerospike.client.command.ParticleType
 
 import cats.data.Kleisli
-import io.aeroless.decoder.Decoder
-import io.aeroless.decoder.Decoder.{bins, logs, yolo}
-import io.aeroless.encoder.Encoder
+import io.aerospike4s.decoder.Decoder
+import io.aerospike4s.decoder.Decoder.{bins, logs, yolo}
+import io.aerospike4s.encoder.Encoder
 
-package object aeroless {
+package object aerospike4s {
 
   val DefaultClassLoader = getClass.getClassLoader
 

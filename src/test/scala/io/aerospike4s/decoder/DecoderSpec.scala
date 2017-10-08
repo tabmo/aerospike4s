@@ -1,8 +1,8 @@
-package io.aeroless.decoder
+package io.aerospike4s.decoder
 
 import org.scalatest.{FlatSpec, Matchers}
 
-import io.aeroless.{AsLong, AsNull, AsString, AsValue}
+import io.aerospike4s.{AsLong, AsNull, AsString, AsValue}
 
 class DecoderSpec extends FlatSpec with Matchers {
   import cats.implicits._

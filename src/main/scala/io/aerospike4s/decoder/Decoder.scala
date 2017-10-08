@@ -1,10 +1,10 @@
-package io.aeroless.decoder
+package io.aerospike4s.decoder
 
 import scala.collection.generic.CanBuildFrom
 
 import cats.Applicative
-import io.aeroless.decoder.Decoder.DecoderAlgebra
-import io.aeroless.{AsArray, AsLong, AsNull, AsObject, AsString, AsValue}
+import io.aerospike4s.decoder.Decoder.DecoderAlgebra
+import io.aerospike4s.{AsArray, AsLong, AsNull, AsObject, AsString, AsValue}
 
 trait Decoder[A] {
   def apply[F[_]](implicit ev: DecoderAlgebra[F]): F[A]

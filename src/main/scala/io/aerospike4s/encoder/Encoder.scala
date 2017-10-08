@@ -1,4 +1,4 @@
-package io.aeroless.encoder
+package io.aerospike4s.encoder
 
 import java.util
 
@@ -7,7 +7,7 @@ import com.aerospike.client.Value.{MapValue, _}
 
 import cats.Cartesian
 import cats.functor.Contravariant
-import io.aeroless.encoder.Encoder.WriterAlgebra
+import io.aerospike4s.encoder.Encoder.WriterAlgebra
 import shapeless.{::, HList, HNil, LabelledGeneric, Lazy, Witness}
 import shapeless.labelled.FieldType
 import shapeless.ops.hlist.IsHCons

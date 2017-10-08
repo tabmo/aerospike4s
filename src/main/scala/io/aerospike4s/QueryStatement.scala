@@ -1,9 +1,9 @@
-package io.aeroless
+package io.aerospike4s
 
 import com.aerospike.client.Value
 import com.aerospike.client.query.{Filter, Statement}
 
-import io.aeroless.decoder.Decoder
+import io.aerospike4s.decoder.Decoder
 import shapeless.{::, HList, HNil, LabelledGeneric, Lazy}
 
 class QueryStatementBuilder[T](

@@ -1,4 +1,4 @@
-package io.aeroless
+package io.aerospike4s
 
 import com.aerospike.client.async.{AsyncClient, EventLoops}
 import com.aerospike.client.policy._
