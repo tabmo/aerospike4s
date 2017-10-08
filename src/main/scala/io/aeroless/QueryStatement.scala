@@ -3,7 +3,7 @@ package io.aeroless
 import com.aerospike.client.Value
 import com.aerospike.client.query.{Filter, Statement}
 
-import io.aeroless.parser.Decoder
+import io.aeroless.decoder.Decoder
 import shapeless.{::, HList, HNil, LabelledGeneric, Lazy}
 
 class QueryStatementBuilder[T](
@@ -38,7 +38,7 @@ class QueryStatementBuilder[T](
 
     override def toStatement: Statement = {
       val s = baseStatement()
-      s.setFilter(Filter.equal(bin, value))
+      s.setFilter(Filter.equal(bin, value.toLong))
       s
     }
   }
@@ -57,7 +57,7 @@ class QueryStatementBuilder[T](
     val s = new Statement()
     s.setNamespace(namespace)
     s.setSetName(set)
-    val bins = decoder.dsl.getBins
+    val bins = decoder.getBins
     if (bins.nonEmpty) s.setBinNames(bins: _*)
     s
   }

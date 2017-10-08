@@ -1,4 +1,4 @@
-package io.aeroless.parser
+package io.aeroless
 
 import scala.collection.JavaConverters._
 

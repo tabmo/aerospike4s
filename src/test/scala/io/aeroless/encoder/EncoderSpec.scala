@@ -1,11 +1,11 @@
-package io.aeroless
+package io.aeroless.encoder
 
 import org.scalatest.{FlatSpec, Matchers}
 
-class EncoderSpec extends FlatSpec with Matchers {
+import io.aeroless.{AsLong, AsNull, AsString, AsValue}
 
-  import parser._
-  import Encoder._
+class EncoderSpec extends FlatSpec with Matchers {
+  import cats.implicits._
 
   "Encoder" should "encode long value" in {
     Encoder[Long].encode(1L) shouldBe AsLong(1L).asAerospikeValue

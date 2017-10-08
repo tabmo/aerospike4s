@@ -1,12 +1,16 @@
 package io
 
 import scala.concurrent.{ExecutionContext, Future}
+import scala.util.Try
 
 import com.aerospike.client.query.IndexType
 import com.aerospike.client._
+import com.aerospike.client.command.ParticleType
 
 import cats.data.Kleisli
-import io.aeroless.parser.Decoder
+import io.aeroless.decoder.Decoder
+import io.aeroless.decoder.Decoder.{bins, logs, yolo}
+import io.aeroless.encoder.Encoder
 
 package object aeroless {
 
@@ -67,7 +71,6 @@ package object aeroless {
   object connection {
 
     import AerospikeIO._
-    import parser._
 
     def pure[A](x: A): AerospikeIO[A] = Pure(x)
 
@@ -90,9 +93,9 @@ package object aeroless {
     }
 
     def get[T](key: Key)(implicit decoder: Decoder[T]): AerospikeIO[Option[T]] = {
-      Get(key, decoder.dsl.getBins).flatMap {
+      Get(key, decoder.getBins).flatMap {
         case Some(r) =>
-          decoder.dsl.runEither(r) match {
+          decoder.runEither(r) match {
             case Right(v) => AerospikeIO.successful(Some(v))
             case Left(err) => AerospikeIO.failed(err)
           }
@@ -118,11 +121,11 @@ package object aeroless {
 
     def scanAll[T](namespace: String, set: String)
       (implicit decoder: Decoder[T]): AerospikeIO[Vector[(Key, T)]] = {
-      ScanAll(namespace, set, decoder.dsl.getBins).flatMap(decodeVector[T])
+      ScanAll(namespace, set, decoder.getBins).flatMap(decodeVector[T])
     }
 
     def getAll[T](keys: Seq[Key])(implicit decoder: Decoder[T]): AerospikeIO[Vector[(Key, T)]] = {
-      GetAll(keys, decoder.dsl.getBins).flatMap(decodeVector[T])
+      GetAll(keys, decoder.getBins).flatMap(decodeVector[T])
     }
 
     def createIndex(namespace: String, set: String, binName: String, idxType: IndexType, idx: Option[String] = None): AerospikeIO[String] = {
@@ -136,7 +139,7 @@ package object aeroless {
     def operate[T](key: Key)(ops: Operation*)(implicit decoder: Decoder[T]): AerospikeIO[Option[T]] = {
       Operate(key, ops).flatMap {
         case Some(r) =>
-          decoder.dsl.runEither(r) match {
+          decoder.runEither(r) match {
             case Right(v) => AerospikeIO.successful(Some(v))
             case Left(err) => AerospikeIO.failed(err)
           }
@@ -159,7 +162,7 @@ package object aeroless {
       import cats.syntax.traverse._
 
       vector.traverse[Either[Throwable, ?], (Key, T)] { t =>
-        decoder.dsl.runEither(t._2).map(r => (t._1, r))
+        decoder.runEither(t._2).map(r => (t._1, r))
       } match {
         case Right(vec) => AerospikeIO.successful(vec)
         case Left(t) => AerospikeIO.failed(t)
@@ -177,4 +180,31 @@ package object aeroless {
     }
   }
 
+  implicit class DecoderOps[A](dsl: Decoder[A]) {
+    def runEither(value: AsValue): Either[Throwable, A] = Try {
+      yolo.runUnsafe(dsl)(value)
+    }.toEither
+
+    def getBins: Seq[String] = bins.getBins(dsl)
+
+    def log: String = logs.log(dsl)
+  }
+
+  implicit class EncoderOps[A](encoder: Encoder[A]) {
+    def encode(value: A): Value = Encoder.valueEncoder.runWriter(encoder).apply(value)
+  }
+
+  implicit class ValueOps(value: Value) {
+    def toBins: Seq[Bin] = {
+      import scala.collection.JavaConverters._
+      value.getType match {
+        case ParticleType.MAP => {
+          value.getObject.asInstanceOf[java.util.Map[String, AnyRef]].asScala.map { case (k, v) =>
+            new Bin(k, v)
+          }.toSeq
+        }
+        case _ => new Bin("value", value.getObject) :: Nil
+      }
+    }
+  }
 }

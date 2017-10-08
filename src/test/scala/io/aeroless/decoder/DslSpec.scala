@@ -1,11 +1,12 @@
-package io.aeroless
+package io.aeroless.decoder
 
 import org.scalatest.{FlatSpec, Matchers}
 
-class DslSpec extends FlatSpec with Matchers {
+import io.aeroless.AsValue
 
+class DslSpec extends FlatSpec with Matchers {
   import cats.implicits._
-  import io.aeroless.parser._
+  import Decoder._
 
   val aerospikeValue = AsValue.obj(
     "name" -> "Romain",
@@ -17,10 +18,10 @@ class DslSpec extends FlatSpec with Matchers {
   )
 
   val program = (
-    get("name")(readString),
-    get("age")(readLong),
-    get("details") {
-      get("city")(readString)
+    field("name")(Decoder[String]),
+    field("age")(Decoder[Long]),
+    field("details") {
+      field("city")(Decoder[String])
     }
   ).tupled
 
@@ -34,7 +35,7 @@ class DslSpec extends FlatSpec with Matchers {
   case class Person(name: String, age: Int, details: Option[Details])
 
   "Value" should "be decode" in {
-    val tested = Decoder[Person].dsl.runEither(aerospikeValue)
+    val tested = Decoder[Person].runEither(aerospikeValue)
     tested shouldBe Right(Person("Romain", 27, Some(Details("Montpellier", "Tabmo"))))
   }
 

@@ -1,6 +1,5 @@
 package io.aeroless
 
-import com.aerospike.client.Value
 import com.aerospike.client.async.{AsyncClient, AsyncClientPolicy, EventLoops, NettyEventLoops}
 import com.aerospike.client.query.IndexType
 import org.scalatest.concurrent.ScalaFutures
@@ -8,10 +7,9 @@ import org.scalatest.{BeforeAndAfterAll, FlatSpec, GivenWhenThen, Matchers}
 
 import io.netty.channel.nio.NioEventLoopGroup
 
-class OpsSpec extends FlatSpec with Matchers with BeforeAndAfterAll with GivenWhenThen with ScalaFutures {
+class OperationSpec extends FlatSpec with Matchers with BeforeAndAfterAll with GivenWhenThen with ScalaFutures {
 
   import scala.concurrent.ExecutionContext.Implicits.global
-
   import org.scalatest.time._
 
   import connection._
