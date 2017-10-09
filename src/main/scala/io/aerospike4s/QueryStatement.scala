@@ -54,6 +54,7 @@ class QueryStatementBuilder[T](
   }
 
   private def baseStatement(): Statement = {
+    import syntax._
     val s = new Statement()
     s.setNamespace(namespace)
     s.setSetName(set)

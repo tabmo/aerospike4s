@@ -92,5 +92,5 @@ object AerospikeIO {
   final case class FMap[A, B](opA: AerospikeIO[A], f: A => B) extends AerospikeIO[B]
 
   final case class Fail[A](t: Throwable) extends AerospikeIO[A]
-
 }
+

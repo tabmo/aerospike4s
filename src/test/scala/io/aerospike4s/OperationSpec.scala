@@ -12,7 +12,7 @@ class OperationSpec extends FlatSpec with Matchers with BeforeAndAfterAll with G
   import scala.concurrent.ExecutionContext.Implicits.global
   import org.scalatest.time._
 
-  import connection._
+  import io.aerospike4s._, syntax._, connection._
 
   implicit val patience = PatienceConfig.apply(timeout = Span(10, Seconds), interval = Span(300, Millis))
 

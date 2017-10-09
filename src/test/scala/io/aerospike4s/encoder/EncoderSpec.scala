@@ -6,6 +6,7 @@ import io.aerospike4s.{AsLong, AsNull, AsString, AsValue}
 
 class EncoderSpec extends FlatSpec with Matchers {
   import cats.implicits._
+  import io.aerospike4s._, syntax._
 
   "Encoder" should "encode long value" in {
     Encoder[Long].encode(1L) shouldBe AsLong(1L).asAerospikeValue

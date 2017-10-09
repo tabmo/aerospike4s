@@ -1,15 +1,9 @@
 package io
 
-import scala.concurrent.{ExecutionContext, Future}
-import scala.util.Try
-
-import com.aerospike.client.query.IndexType
 import com.aerospike.client._
-import com.aerospike.client.command.ParticleType
+import com.aerospike.client.query.IndexType
 
-import cats.data.Kleisli
 import io.aerospike4s.decoder.Decoder
-import io.aerospike4s.decoder.Decoder.{bins, logs, yolo}
 import io.aerospike4s.encoder.Encoder
 
 package object aerospike4s {
@@ -71,6 +65,7 @@ package object aerospike4s {
   object connection {
 
     import AerospikeIO._
+    import syntax._
 
     def pure[A](x: A): AerospikeIO[A] = Pure(x)
 
@@ -170,41 +165,4 @@ package object aerospike4s {
     }
   }
 
-  implicit class AerospikeIOOps[A](io: AerospikeIO[A]) {
-
-    def runFuture(manager: AerospikeManager)(implicit ec: ExecutionContext): Future[A] = {
-      import cats.implicits._
-      val f = BaseInterpreter[Kleisli[Future, AerospikeManager, ?]](LogInterpreter[Kleisli[Future, AerospikeManager, ?]](KleisliInterpreter.apply(ec)).apply).apply(io).apply(manager)
-      f.failed.map(_.printStackTrace)
-      f
-    }
-  }
-
-  implicit class DecoderOps[A](dsl: Decoder[A]) {
-    def runEither(value: AsValue): Either[Throwable, A] = Try {
-      yolo.runUnsafe(dsl)(value)
-    }.toEither
-
-    def getBins: Seq[String] = bins.getBins(dsl)
-
-    def log: String = logs.log(dsl)
-  }
-
-  implicit class EncoderOps[A](encoder: Encoder[A]) {
-    def encode(value: A): Value = Encoder.valueEncoder.runWriter(encoder).apply(value)
-  }
-
-  implicit class ValueOps(value: Value) {
-    def toBins: Seq[Bin] = {
-      import scala.collection.JavaConverters._
-      value.getType match {
-        case ParticleType.MAP => {
-          value.getObject.asInstanceOf[java.util.Map[String, AnyRef]].asScala.map { case (k, v) =>
-            new Bin(k, v)
-          }.toSeq
-        }
-        case _ => new Bin("value", value.getObject) :: Nil
-      }
-    }
-  }
 }

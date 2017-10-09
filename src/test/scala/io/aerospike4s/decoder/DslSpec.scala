@@ -2,11 +2,9 @@ package io.aerospike4s.decoder
 
 import org.scalatest.{FlatSpec, Matchers}
 
-import io.aerospike4s.AsValue
-
 class DslSpec extends FlatSpec with Matchers {
   import cats.implicits._
-  import Decoder._
+  import io.aerospike4s._, syntax._
 
   val aerospikeValue = AsValue.obj(
     "name" -> "Romain",
@@ -17,13 +15,16 @@ class DslSpec extends FlatSpec with Matchers {
     )
   )
 
-  val program = (
-    field[String]("name"),
-    field[Long]("age"),
-    field("details") {
-      field[String]("city")
-    }
-  ).tupled
+  val program = {
+    import Decoder._
+    (
+      field[String]("name"),
+      field[Long]("age"),
+      field("details") {
+        field[String]("city")
+      }
+    ).tupled
+  }
 
 
   "Value" should "be read" in {

@@ -6,6 +6,7 @@ import io.aerospike4s.{AsLong, AsNull, AsString, AsValue}
 
 class DecoderSpec extends FlatSpec with Matchers {
   import cats.implicits._
+  import io.aerospike4s._, syntax._
 
   "Decoder" should "dsl.runEither long value" in {
     Decoder[Long].runEither(AsLong(1L)) shouldBe Right(1L)
