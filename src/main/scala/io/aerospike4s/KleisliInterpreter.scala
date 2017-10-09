@@ -251,60 +251,6 @@ object KleisliInterpreter {
   private def kleisli[A](f: AerospikeManager => Future[A]): Kleisli[Future, AerospikeManager, A] = Kleisli.apply[Future, AerospikeManager, A](f)
 }
 
-case class LogInterpreter[F[_]](interpreter: AerospikeIO ~> F) {
-  module =>
-
-  val apply: AerospikeIO ~> F = λ[AerospikeIO ~> F] {
-    case e@Put(key, bins) => time(s"#Put $key $bins", e)
-
-    case e@Append(key, bins) => time(s"#Append $key $bins", e)
-
-    case e@Prepend(key, bins) => time(s"#Prepend $key $bins", e)
-
-    case e@Add(key, bins) => time(s"#Add $key $bins", e)
-
-    case e@Delete(key) => time(s"#Delete $key", e)
-
-    case e@Touch(key) => time(s"#Touch $key", e)
-
-    case e@Exists(key) => time(s"#Exists $key", e)
-
-    case e@Get(key, bins) => time(s"#Get $key $bins", e)
-
-    case e@Query(statement) => time(s"#Query $statement", e)
-
-    case e@ScanAll(ns, set, bins) => time(s"#ScanAll $ns $set $bins", e)
-
-    case e@GetAll(keys, bins) => time(s"#GetAll $keys $bins", e)
-
-    case e@Header(key) => time(s"#Header $key", e)
-
-    case e@CreateIndex(ns, set, bin, idxType, idxOpt) => time(s"#CreateIndex $ns $set $bin $idxType $idxOpt", e)
-
-    case e@DropIndex(ns, set, idx) => time(s"#DropIndex $ns $set $idx", e)
-
-    case e@Operate(key, ops) => time(s"#Operate $key $ops", e)
-
-    case e@RegisterUDF(path, serverPath, _, lang) => time(s"#RegisterUDF $path $serverPath $lang", e)
-
-    case e@RemoveUDF(serverPath) => time(s"#RemoveUDF $serverPath", e)
-  }
-
-  private val LogHeader =
-    """
-      |~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-      |
-    """.stripMargin
-
-  private def time[A](operation: String, io: AerospikeIO[A]): F[A] = {
-    val startT = System.currentTimeMillis()
-    val r = interpreter.apply(io)
-    val endT = System.currentTimeMillis() - startT
-    println(s"$LogHeader$operation [$endT ms]")
-    r
-  }
-}
-
 case class BaseInterpreter[F[_]](interpreter: AerospikeIO ~> F)(implicit ev: MonadError[F, Throwable]) {
   module =>
 
