@@ -4,7 +4,7 @@ import com.aerospike.client.Value
 import com.aerospike.client.query.{Filter, Statement}
 
 import io.aerospike4s.decoder.Decoder
-import shapeless.{::, HList, HNil, LabelledGeneric, Lazy}
+import shapeless.{::, Generic, HList, HNil, Lazy}
 
 class QueryStatementBuilder[T](
   namespace: String,
@@ -70,7 +70,7 @@ sealed trait QueryStatement[T] {
 
   def toStatement: Statement
 
-  def aggregate[I](af: AggregateFunction[I])(inputValues: I)(implicit ev: I => FunctionValues[I]) = new QueryStatement[T] {
+  def aggregate[I](af: AggregateFunction[I])(inputValues: I)(implicit ev: FunctionValues.FV[I]) = new QueryStatement[T] {
     val decoder: Decoder[T] = outer.decoder
 
     override def toStatement: Statement = {
@@ -86,28 +86,32 @@ case class AggregateFunction[T](path: String, pack: String, funName: String, cla
 case class FunctionValues[T](values: Seq[Value]) extends AnyVal
 
 object FunctionValues {
-  implicit val longFunValues: Long => FunctionValues[Long] = (v: Long) => FunctionValues(Value.get(v) :: Nil)
+  type FV[A] = A => FunctionValues[A]
 
-  implicit val intFunValues: Int => FunctionValues[Int] = (v: Int) => FunctionValues(Value.get(v) :: Nil)
+  implicit val longFunValues: FV[Long] = (v: Long) => FunctionValues(Value.get(v) :: Nil)
 
-  implicit val stringFunValues: String => FunctionValues[String] = (v: String) => FunctionValues(Value.get(v) :: Nil)
+  implicit val intFunValues: FV[Int] = (v: Int) => FunctionValues(Value.get(v) :: Nil)
 
-  implicit val booleanFunValues: Boolean => FunctionValues[Boolean] = (v: Boolean) => FunctionValues(Value.get(v) :: Nil)
+  implicit val stringFunValues: FV[String] = (v: String) => FunctionValues(Value.get(v) :: Nil)
 
-  implicit val floatFunValues: Float => FunctionValues[Float] = (v: Float) => FunctionValues(Value.get(v) :: Nil)
+  implicit val booleanFunValues: FV[Boolean] = (v: Boolean) => FunctionValues(Value.get(v) :: Nil)
 
-  implicit val doubleFunValues: Double => FunctionValues[Double] = (v: Double) => FunctionValues(Value.get(v) :: Nil)
+  implicit val floatFunValues: FV[Float] = (v: Float) => FunctionValues(Value.get(v) :: Nil)
 
-  implicit val hnilFunValues: FunctionValues[HNil] = FunctionValues(Nil)
+  implicit val doubleFunValues: FV[Double] = (v: Double) => FunctionValues(Value.get(v) :: Nil)
+
+  implicit val hnilFunValues: FV[HNil] = _ => FunctionValues(Nil)
 
   implicit def hlistFunValues[H, T <: shapeless.HList](
-    hEncoder: Lazy[H => FunctionValues[H]],
-    tEncoder: Lazy[T => FunctionValues[T]]
-  ): H :: T => FunctionValues[H :: T] = (hlist: (H :: T)) => {
+    implicit hEncoder: Lazy[FV[H]],
+    tEncoder: Lazy[FV[T]]
+  ): FV[H :: T] = (hlist: (H :: T)) => {
     val hV = hEncoder.value(hlist.head).values
     val tV = tEncoder.value(hlist.tail).values
     FunctionValues(hV ++ tV)
   }
 
-  def apply[T, Repr <: HList](obj: T)(implicit gen: LabelledGeneric.Aux[T, Repr], fv: Repr => FunctionValues[Repr]): FunctionValues[T] = FunctionValues(fv.apply(gen.to(obj)).values)
+  implicit def objectFunValues[T, Repr <: HList](implicit gen: Generic.Aux[T, Repr], fv: FV[Repr]): FV[T] = (obj: T) => {
+    FunctionValues(fv.apply(gen.to(obj)).values)
+  }
 }

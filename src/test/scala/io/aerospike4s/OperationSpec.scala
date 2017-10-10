@@ -24,14 +24,14 @@ class OperationSpec extends FlatSpec with Matchers with BeforeAndAfterAll with G
     override val client: AsyncClient = aerospikeClient
   }
 
-  val kd = keydomain("test", "set")
+  object TestSet extends Set("test", "set")
 
   case class TestValue(id: String)
 
   case class LongValue(value: Long)
 
   "Append / Prepend" should "work" in {
-    val key = kd("AppendOps")
+    val key = TestSet.key("AppendOps")
     val io = for {
       _ <- put(key, TestValue("value"))
       _ <- append(key, Map(
@@ -49,7 +49,7 @@ class OperationSpec extends FlatSpec with Matchers with BeforeAndAfterAll with G
   }
 
   "Add operation" should "work" in {
-    val key = kd("AddOps")
+    val key = TestSet.key("AddOps")
     val io = for {
       _ <- put(key, LongValue(1L))
       _ <- add(key, Seq(("value" -> 2L)))
@@ -62,7 +62,7 @@ class OperationSpec extends FlatSpec with Matchers with BeforeAndAfterAll with G
   }
 
   "Delete operation" should "work" in {
-    val key = kd("AddOps")
+    val key = TestSet.key("AddOps")
     val io = for {
       _ <- put(key, TestValue("value"))
       _ <- delete(key)
@@ -75,7 +75,7 @@ class OperationSpec extends FlatSpec with Matchers with BeforeAndAfterAll with G
   }
 
   "Touch operation" should "work" in {
-    val key = kd("TouchOps")
+    val key = TestSet.key("TouchOps")
     val io = for {
       _ <- put(key, TestValue("value"))
       _ <- touch(key)
@@ -87,7 +87,7 @@ class OperationSpec extends FlatSpec with Matchers with BeforeAndAfterAll with G
   }
 
   "Header operation" should "work" in {
-    val key = kd("HeaderOps")
+    val key = TestSet.key("HeaderOps")
     val io = for {
       _ <- put(key, TestValue("value"))
       _ <- header(key)
@@ -99,11 +99,11 @@ class OperationSpec extends FlatSpec with Matchers with BeforeAndAfterAll with G
   }
 
   "Exists operation" should "work" in {
-    val key = kd("TouchOps")
+    val key = TestSet.key("TouchOps")
     val io = for {
       _ <- put(key, TestValue("value"))
       existsKey <- exists(key)
-      notExistsKey <- exists(kd("notexists"))
+      notExistsKey <- exists(TestSet.key("notexists"))
     } yield (existsKey, notExistsKey)
 
     whenReady(io.runFuture(manager)) { r =>
@@ -112,11 +112,11 @@ class OperationSpec extends FlatSpec with Matchers with BeforeAndAfterAll with G
   }
 
   "Query statement operation" should "work" in {
-    val kd = keydomain("test", "setQueryOps")
+    val set = Set("test", "setQueryOps")
     val io = for {
       _ <- createIndex("test", "setQueryOps", "id", IndexType.STRING)
-      _ <- put(kd("test_stmt_1"), TestValue("stmt1"))
-      _ <- put(kd("test_stmt_2"), TestValue("stmt2"))
+      _ <- put(set.key("test_stmt_1"), TestValue("stmt1"))
+      _ <- put(set.key("test_stmt_2"), TestValue("stmt2"))
       record <- query(statement[TestValue]("test", "setQueryOps").binEqualTo("id", "stmt1"))
     } yield record.map(_._2)
 
@@ -130,9 +130,9 @@ class OperationSpec extends FlatSpec with Matchers with BeforeAndAfterAll with G
 
   "scan all operation" should "work" in {
     val io = for {
-      _ <- put(kd("test_scan_1"), TestValue("scan1"))
-      _ <- put(kd("test_scan_2"), TestValue("scan2"))
-      _ <- put(kd("test_scan_3"), TestValue("scan3"))
+      _ <- put(TestSet.key("test_scan_1"), TestValue("scan1"))
+      _ <- put(TestSet.key("test_scan_2"), TestValue("scan2"))
+      _ <- put(TestSet.key("test_scan_3"), TestValue("scan3"))
       record <- scanAll[TestValue]("test", "set")
     } yield record.map(_._2)
 
@@ -147,8 +147,8 @@ class OperationSpec extends FlatSpec with Matchers with BeforeAndAfterAll with G
   }
 
   "Get all operation" should "work" in {
-    val key1 = kd("test_getall_1")
-    val key2 = kd("test_getall_2")
+    val key1 = TestSet.key("test_getall_1")
+    val key2 = TestSet.key("test_getall_2")
 
     val io = for {
       _ <- put(key1, TestValue("getall1"))
@@ -176,7 +176,7 @@ class OperationSpec extends FlatSpec with Matchers with BeforeAndAfterAll with G
   }
 
   "Operate operation" should "work" in {
-    val key = kd("Operate_Ops")
+    val key = TestSet.key("Operate_Ops")
     val io = operate[TestValue](key)(
       ops.put("id", "value"),
       ops.append("id", "_with_suffix"),
@@ -192,19 +192,22 @@ class OperationSpec extends FlatSpec with Matchers with BeforeAndAfterAll with G
   case class Person(name: String, age: Int)
 
   "Aggregate operation" should "work" in {
-    val key = keydomain("test", "setAggregateOps")("Aggregate_Ops")
-    val aggregateFunction = AggregateFunction[Int](
-      path = "persons.lua",
-      pack = "persons",
-      funName = "filterByAge"
-    )
+    val key = Set("test", "setAggregateOps").key("Aggregate_Ops")
+
+    object PersonLuaScript extends UDFScript("persons.lua", "persons") {
+      val filterByAge = function[(Int, Double)]("filterByAge")
+    }
 
     val io = for {
       _ <- registerUDF("persons.lua", "persons.lua")
       _ <- createIndex("test", "setAggregateOps", "age", IndexType.NUMERIC)
       _ <- put(key, Person("Romain", 28))
       _ <- put(key, Person("Bob", 33))
-      r <- query(statement[Person]("test", "setAggregateOps").onRange("age", 10, 40).aggregate(aggregateFunction)(30))
+      r <- query(
+        statement[Person]("test", "setAggregateOps")
+          .onRange("age", 10, 40)
+          .aggregate(PersonLuaScript.filterByAge)((30, 2d))
+      )
       _ <- removeUdf("persons.lua")
     } yield r.map(_._2)
 

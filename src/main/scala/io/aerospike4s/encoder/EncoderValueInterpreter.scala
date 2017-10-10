@@ -24,7 +24,7 @@ object EncoderValueInterpreter { self =>
 
     override def writeLong: Stack[Long] = v => new LongValue(v)
 
-    override def writeNull: Stack[Unit] = _ => NullValue.INSTANCE
+    override def writeNull: Stack[Unit] = _ => new MapValue(util.Collections.emptyMap[String, AnyRef]())
 
     override def writeValues[A](implicit next: Encoder[A]): Stack[Traversable[A]] = list => {
       val javaList = new util.ArrayList[Value](list.size)
@@ -65,8 +65,6 @@ object EncoderValueInterpreter { self =>
             }
           }
           new MapValue(newMap)
-        case (a, _: NullValue) => a
-        case (_: NullValue, b) => b
         case (_, b) => b
       }
     }

@@ -66,7 +66,7 @@ object Encoder {
     override def apply[F[_]](implicit ev: EncoderAlgebra[F]): F[Traversable[A]] = ev.writeValues(next)
   }
 
-  implicit def hnilDecoder: Encoder[HNil] = encoderNull.contramap(_ => ())
+  implicit def hnilDecoder: Encoder[HNil] = encoderNull.contramap(_ => HNil)
 
   implicit def hlistDecoder[K <: Symbol, H, T <: HList](
     implicit witness: Witness.Aux[K],
