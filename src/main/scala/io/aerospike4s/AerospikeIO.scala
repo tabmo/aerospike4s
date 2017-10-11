@@ -67,7 +67,7 @@ object AerospikeIO {
 
   final case class ScanAll(namespace: String, set: String, binNames: Seq[String]) extends AerospikeIO[Vector[(Key, AsValue)]]
 
-  final case class GetAll[A](keys: Seq[Key], binNames: Seq[String]) extends AerospikeIO[Vector[(Key, AsValue)]]
+  final case class GetAll(keys: Seq[Key], binNames: Seq[String]) extends AerospikeIO[Vector[(Key, AsValue)]]
 
   //Index
   final case class CreateIndex(namespace: String, set: String, binName: String, idxType: IndexType, index: Option[String]) extends AerospikeIO[String]
@@ -83,7 +83,7 @@ object AerospikeIO {
   final case class RemoveUDF(serverPath: String) extends AerospikeIO[Unit]
 
   //Plumbing
-  final case class Pure[A, B](x: A) extends AerospikeIO[A]
+  final case class Pure[A](x: A) extends AerospikeIO[A]
 
   final case class Join[A, B](opA: AerospikeIO[A], opB: AerospikeIO[B]) extends AerospikeIO[(A, B)]
 
