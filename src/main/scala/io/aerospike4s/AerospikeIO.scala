@@ -7,11 +7,14 @@ import cats.MonadError
 import io.aerospike4s.AerospikeIO.{Bind, FMap, Fail, Join}
 
 abstract class AerospikeIO[A] { self =>
-  def map[B](f: A => B): AerospikeIO[B] = FMap(this, f)
+  def map[B](f: A => B): AerospikeIO[B] = FMap(self, f)
 
-  def flatMap[B](f: A => AerospikeIO[B]): AerospikeIO[B] = Bind(this, f)
+  def flatMap[B](f: A => AerospikeIO[B]): AerospikeIO[B] = self match {
+    case Bind(x, fy) => Bind(x, (y: Any) => Bind(fy.asInstanceOf[Any => AerospikeIO[A]](y), f))
+    case _ => Bind(self, f)
+  }
 
-  def product[B](opsB: AerospikeIO[B]): AerospikeIO[(A, B)] = Join(this, opsB)
+  def product[B](opsB: AerospikeIO[B]): AerospikeIO[(A, B)] = Join(self, opsB)
 
   def recover(f: Throwable => AerospikeIO[A]): AerospikeIO[A] = self match {
     case Fail(t) => f(t)
