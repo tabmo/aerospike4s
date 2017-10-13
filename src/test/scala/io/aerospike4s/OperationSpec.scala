@@ -1,6 +1,7 @@
 package io.aerospike4s
 
-import com.aerospike.client.async.{AsyncClient, AsyncClientPolicy, EventLoops, NettyEventLoops}
+import com.aerospike.client.AerospikeClient
+import com.aerospike.client.async._
 import com.aerospike.client.query.IndexType
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.{BeforeAndAfterAll, FlatSpec, GivenWhenThen, Matchers}
@@ -12,17 +13,23 @@ class OperationSpec extends FlatSpec with Matchers with BeforeAndAfterAll with G
   import scala.concurrent.ExecutionContext.Implicits.global
   import org.scalatest.time._
 
-  import io.aerospike4s._, syntax._, connection._
+  import syntax._, connection._
 
   implicit val patience = PatienceConfig.apply(timeout = Span(10, Seconds), interval = Span(300, Millis))
 
-  val aerospikeClient: AsyncClient = new AsyncClient(new AsyncClientPolicy(), "localhost", 3000)
-
   val manager = new AerospikeManager {
-    override val eventLoops: EventLoops = new NettyEventLoops(new NioEventLoopGroup(1))
+    override val eventLoops: EventLoops = new NettyEventLoops(new NioEventLoopGroup(4))
 
-    override val client: AsyncClient = aerospikeClient
+    override val client: AerospikeClient = {
+      import com.aerospike.client.policy.ClientPolicy
+      val clientPolicy = new ClientPolicy
+      clientPolicy.eventLoops = eventLoops
+      new AerospikeClient(clientPolicy, "localhost", 3000)
+    }
   }
+
+
+  override protected def afterAll(): Unit = manager.client.close()
 
   object TestSet extends Set("test", "set")
 
