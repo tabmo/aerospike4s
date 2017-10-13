@@ -54,6 +54,8 @@ object DecoderYoloInterpreter { self =>
       case e => throw ParseException(s"Try read an array but $e is not.")
     }
 
+    override def readRawValue: Stack[AsValue] = identity
+
     override def readFields[A](next: Decoder[A]): Stack[Map[String, A]] = {
       case AsObject(map) => map.mapValues(e => self.decodeUnsafe(next).apply(e.value))
       case e => throw ParseException(s"Try read an object but $e is not.")

@@ -1,5 +1,7 @@
 package io.aerospike4s.encoder
 
+import com.aerospike.client.Value
+
 import cats.Cartesian
 import cats.functor.Contravariant
 import shapeless.labelled.FieldType
@@ -52,6 +54,10 @@ object Encoder {
 
   implicit def encoderNull: Encoder[Unit] = new Encoder[Unit] {
     override def apply[F[_]](implicit ev: EncoderAlgebra[F]): F[Unit] = ev.writeNull
+  }
+
+  implicit def encoderRawValue: Encoder[Value] = new Encoder[Value] {
+    override def apply[F[_]](implicit ev: EncoderAlgebra[F]): F[Value] = ev.writeRawValue
   }
 
   implicit def encoderMap[A](implicit next: Encoder[A]): Encoder[Map[String, A]] = new Encoder[Map[String, A]] {

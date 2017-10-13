@@ -20,6 +20,8 @@ object BinResolverInterpreter {
 
     override def readValues[A, L[_]](next: Decoder[A], cbf: CanBuildFrom[Nothing, A, L[A]]): Stack[L[A]] = List("value")
 
+    override def readRawValue = Nil
+
     override def readFields[A](next: Decoder[A]): Stack[Map[String, A]] = Nil
 
     override def pure[A](x: A): Stack[A] = Nil

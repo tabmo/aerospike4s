@@ -1,7 +1,9 @@
 package io.aerospike4s.decoder
 
 import scala.collection.generic.CanBuildFrom
+
 import cats.Applicative
+import io.aerospike4s.AsValue
 
 trait DecoderAlgebra[F[_]] extends Applicative[F] {
   def field[A](field: String)(next: Decoder[A]): F[A]
@@ -15,6 +17,8 @@ trait DecoderAlgebra[F[_]] extends Applicative[F] {
   def readLong: F[Long]
 
   def readNull: F[Unit]
+
+  def readRawValue: F[AsValue]
 
   def readValues[A, L[_]](next: Decoder[A], cbf: CanBuildFrom[Nothing, A, L[A]]): F[L[A]]
 

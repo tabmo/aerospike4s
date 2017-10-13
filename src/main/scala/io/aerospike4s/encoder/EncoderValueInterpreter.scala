@@ -26,6 +26,8 @@ object EncoderValueInterpreter { self =>
 
     override def writeNull: Stack[Unit] = _ => new MapValue(util.Collections.emptyMap[String, AnyRef]())
 
+    override def writeRawValue: Stack[Value] = identity
+
     override def writeValues[A](implicit next: Encoder[A]): Stack[Traversable[A]] = list => {
       val javaList = new util.ArrayList[Value](list.size)
       var idx = 0

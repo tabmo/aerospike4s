@@ -3,6 +3,7 @@ package io.aerospike4s.decoder
 import scala.collection.generic.CanBuildFrom
 
 import cats.Applicative
+import io.aerospike4s.AsValue
 
 trait Decoder[A] {
   def apply[F[_]](implicit ev: DecoderAlgebra[F]): F[A]
@@ -42,6 +43,10 @@ object Decoder {
 
   implicit def decoderNull: Decoder[Unit] = new Decoder[Unit] {
     override def apply[F[_]](implicit ev: DecoderAlgebra[F]): F[Unit] = ev.readNull
+  }
+
+  implicit def decoderRawValues: Decoder[AsValue] = new Decoder[AsValue] {
+    override def apply[F[_]](implicit ev: DecoderAlgebra[F]): F[AsValue] = ev.readRawValue
   }
 
   implicit def decoderTraversable[A, L[_]](implicit next: Decoder[A], cbf: CanBuildFrom[Nothing, A, L[A]]): Decoder[L[A]] = new Decoder[L[A]] {
