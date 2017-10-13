@@ -1,10 +1,11 @@
 package io.aerospike4s
 
-import com.aerospike.client.async.{AsyncClient, EventLoops}
+import com.aerospike.client.AerospikeClient
+import com.aerospike.client.async.EventLoops
 import com.aerospike.client.policy._
 
 trait AerospikeManager {
-  val client: AsyncClient
+  val client: AerospikeClient
   val eventLoops: EventLoops
 
   val policy: Option[Policy] = None

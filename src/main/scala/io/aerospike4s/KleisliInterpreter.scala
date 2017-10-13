@@ -6,10 +6,12 @@ import com.aerospike.client.listener.{WriteListener, _}
 import com.aerospike.client.{AerospikeException, Key, Record}
 
 import cats.data.Kleisli
-import cats.{MonadError, ~>}
-import io.aerospike4s.AerospikeIO.{Add, Append, Bind, CreateIndex, Delete, DropIndex, Exists, FMap, Fail, Get, GetAll, Header, Join, Operate, Prepend, Pure, Put, Query, RegisterUDF, RemoveUDF, ScanAll, Touch}
+import cats.~>
+import io.aerospike4s.AerospikeIO.{Add, Append, Bind, CreateIndex, Delete, DropIndex, Exists, Fail, Get, GetAll, Header, Join, Operate, Prepend, Pure, Put, Query, RegisterUDF, RemoveUDF, ScanAll, Touch}
 
-object KleisliInterpreter {
+object KleisliInterpreter { module =>
+
+  import cats.implicits._
 
   def apply(implicit ec: ExecutionContext): AerospikeIO ~> Kleisli[Future, AerospikeManager, ?] = λ[AerospikeIO ~> Kleisli[Future, AerospikeManager, ?]] {
 
@@ -245,28 +247,25 @@ object KleisliInterpreter {
         }
       }
     }
+
+    case Pure(x) => Kleisli.lift(Future.successful(x))
+
+    case Join(opA, opB) =>
+      kleisli { m =>
+        val fa = module.apply(ec)(opA)(m)
+        val fb = module.apply(ec)(opB)(m)
+        for {
+          a <- fa
+          b <- fb
+        } yield (a, b)
+      }
+
+    case Bind(x, f) =>
+      module.apply(ec)(x).flatMap { a => module.apply(ec)(f(a)) }
+
+    case Fail(t) => Kleisli.lift(Future.failed(t))
   }
 
 
   private def kleisli[A](f: AerospikeManager => Future[A]): Kleisli[Future, AerospikeManager, A] = Kleisli.apply[Future, AerospikeManager, A](f)
-}
-
-case class BaseInterpreter[F[_]](interpreter: AerospikeIO ~> F)(implicit ev: MonadError[F, Throwable]) {
-  module =>
-
-  val apply: AerospikeIO ~> F = new (AerospikeIO ~> F) {
-    override def apply[A](fa: AerospikeIO[A]): F[A] = fa match {
-      case Pure(x) => ev.pure(x)
-
-      case Join(opA, opB) => ev.tuple2(module.apply(opA), module.apply(opB))
-
-      case Bind(x, f) => ev.flatMap(module.apply(x))(r => module.apply(f(r)))
-
-      case FMap(x, f) => ev.map(module.apply(x))(f)
-
-      case Fail(t) => ev.raiseError(t)
-
-      case _ => interpreter(fa)
-    }
-  }
 }

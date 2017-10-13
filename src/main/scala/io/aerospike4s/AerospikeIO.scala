@@ -4,14 +4,14 @@ import com.aerospike.client.query.IndexType
 import com.aerospike.client._
 
 import cats.MonadError
-import io.aerospike4s.AerospikeIO.{Bind, FMap, Fail, Join}
+import io.aerospike4s.AerospikeIO.{Bind, Fail, Join}
 
 abstract class AerospikeIO[A] { self =>
-  def map[B](f: A => B): AerospikeIO[B] = FMap(self, f)
+  def map[B](f: A => B): AerospikeIO[B] = flatMap(f.andThen(AerospikeIO.successful))
 
   def flatMap[B](f: A => AerospikeIO[B]): AerospikeIO[B] = self match {
-    case Bind(x, fy) => Bind(x, (y: Any) => Bind(fy.asInstanceOf[Any => AerospikeIO[A]](y), f))
-    case _ => Bind(self, f)
+      case Bind(x, fy) => Bind(x, (y: Any) => Bind(fy.asInstanceOf[Any => AerospikeIO[A]](y), f))
+      case _ => Bind(self, f)
   }
 
   def product[B](opsB: AerospikeIO[B]): AerospikeIO[(A, B)] = Join(self, opsB)
@@ -25,11 +25,9 @@ abstract class AerospikeIO[A] { self =>
 object AerospikeIO {
 
   implicit val monadAerospikeIO: MonadError[AerospikeIO, Throwable] = new MonadError[AerospikeIO, Throwable] {
-    override def pure[A](x: A): AerospikeIO[A] = pure(x)
+    override def pure[A](x: A): AerospikeIO[A] = AerospikeIO.successful(x)
 
     override def flatMap[A, B](fa: AerospikeIO[A])(f: (A) => AerospikeIO[B]) = fa.flatMap(f)
-
-    override def map[A, B](opA: AerospikeIO[A])(f: A => B): AerospikeIO[B] = opA.map(f)
 
     override def product[A, B](opA: AerospikeIO[A], opB: AerospikeIO[B]): AerospikeIO[(A, B)] = opA.product(opB)
 
@@ -91,8 +89,6 @@ object AerospikeIO {
   final case class Join[A, B](opA: AerospikeIO[A], opB: AerospikeIO[B]) extends AerospikeIO[(A, B)]
 
   final case class Bind[A, B](opA: AerospikeIO[A], f: A => AerospikeIO[B]) extends AerospikeIO[B]
-
-  final case class FMap[A, B](opA: AerospikeIO[A], f: A => B) extends AerospikeIO[B]
 
   final case class Fail[A](t: Throwable) extends AerospikeIO[A]
 }
