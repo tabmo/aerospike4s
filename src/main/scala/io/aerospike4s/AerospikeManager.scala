@@ -1,7 +1,7 @@
 package io.aerospike4s
 
 import com.aerospike.client.AerospikeClient
-import com.aerospike.client.async.EventLoops
+import com.aerospike.client.async.{EventLoops, NioEventLoops}
 import com.aerospike.client.policy._
 
 trait AerospikeManager {
@@ -16,4 +16,25 @@ trait AerospikeManager {
   //val adminPolicy: Option[AdminPolicy] = None
   //val generationPolicy: Option[GenerationPolicy] = None
   val scanPolicy: Option[ScanPolicy] = None
+
+  def close(): Unit = {
+    client.close()
+    eventLoops.close()
+  }
+}
+
+object AerospikeManager {
+
+  def apply(host: String, port: Int): AerospikeManager = {
+    new AerospikeManager {
+      override val eventLoops: EventLoops = new NioEventLoops(Runtime.getRuntime.availableProcessors())
+
+      override val client: AerospikeClient = {
+        import com.aerospike.client.policy.ClientPolicy
+        val clientPolicy = new ClientPolicy
+        clientPolicy.eventLoops = eventLoops
+        new AerospikeClient(clientPolicy, host, port)
+      }
+    }
+  }
 }

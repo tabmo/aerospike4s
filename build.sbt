@@ -31,9 +31,6 @@ lazy val root = (project in file(".")).
     libraryDependencies += scalaTest % Test,
     libraryDependencies += "org.typelevel" %% "cats-core" % "1.0.0-MF",
     libraryDependencies += "com.aerospike" % "aerospike-client" % "4.0.8",
-    libraryDependencies += "io.netty" % "netty-handler" % "4.1.11.Final",
-    libraryDependencies += "io.netty" % "netty-transport" % "4.1.11.Final",
-    libraryDependencies += "io.netty" % "netty-transport-native-epoll" % "4.1.11.Final",
     libraryDependencies += "com.chuusai" %% "shapeless" % "2.3.2",
 
     /*

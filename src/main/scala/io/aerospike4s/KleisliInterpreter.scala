@@ -16,16 +16,16 @@ object KleisliInterpreter { module =>
   def apply(implicit ec: ExecutionContext): AerospikeIO ~> Kleisli[Future, AerospikeManager, ?] = λ[AerospikeIO ~> Kleisli[Future, AerospikeManager, ?]] {
 
     case Put(key, bins) => kleisli[Unit] { m =>
-
       val promise = Promise[Unit]()
 
-      m.client.put(m.eventLoops.next(), new WriteListener {
+      val listener = new WriteListener {
         override def onFailure(exception: AerospikeException): Unit = promise.failure(exception)
 
         override def onSuccess(key: Key): Unit = promise.success(())
+      }
 
-      }, m.writePolicy.orNull, key, bins: _*)
-
+      if (bins.isEmpty) m.client.put(m.eventLoops.next(), listener, m.writePolicy.orNull, key)
+      else m.client.put(m.eventLoops.next(), listener, m.writePolicy.orNull, key, bins: _*)
 
       promise.future
     }
@@ -33,12 +33,14 @@ object KleisliInterpreter { module =>
     case Append(key, bins) => kleisli[Unit] { m =>
       val promise = Promise[Unit]
 
-      m.client.append(m.eventLoops.next(), new WriteListener {
+      val listener = new WriteListener {
         override def onFailure(exception: AerospikeException): Unit = promise.failure(exception)
 
         override def onSuccess(key: Key): Unit = promise.success(())
+      }
 
-      }, m.writePolicy.orNull, key, bins: _*)
+      if (bins.isEmpty) m.client.append(m.eventLoops.next(), listener, m.writePolicy.orNull, key)
+      else m.client.append(m.eventLoops.next(), listener, m.writePolicy.orNull, key, bins: _*)
 
       promise.future
     }
@@ -46,12 +48,14 @@ object KleisliInterpreter { module =>
     case Prepend(key, bins) => kleisli[Unit] { m =>
       val promise = Promise[Unit]
 
-      m.client.prepend(m.eventLoops.next(), new WriteListener {
+      val listener = new WriteListener {
         override def onFailure(exception: AerospikeException): Unit = promise.failure(exception)
 
         override def onSuccess(key: Key): Unit = promise.success(())
+      }
 
-      }, m.writePolicy.orNull, key, bins: _*)
+      if (bins.isEmpty) m.client.prepend(m.eventLoops.next(), listener, m.writePolicy.orNull, key)
+      else m.client.prepend(m.eventLoops.next(), listener, m.writePolicy.orNull, key, bins: _*)
 
       promise.future
     }
@@ -59,12 +63,14 @@ object KleisliInterpreter { module =>
     case Add(key, bins) => kleisli[Unit] { m =>
       val promise = Promise[Unit]
 
-      m.client.add(m.eventLoops.next(), new WriteListener {
+      val listener = new WriteListener {
         override def onFailure(exception: AerospikeException): Unit = promise.failure(exception)
 
         override def onSuccess(key: Key): Unit = promise.success(())
+      }
 
-      }, m.writePolicy.orNull, key, bins: _*)
+      if (bins.isEmpty) m.client.add(m.eventLoops.next(), listener, m.writePolicy.orNull, key)
+      else m.client.add(m.eventLoops.next(), listener, m.writePolicy.orNull, key, bins: _*)
 
       promise.future
     }
@@ -110,11 +116,14 @@ object KleisliInterpreter { module =>
     case Get(key, bins) => kleisli[Option[AsValue]] { m =>
       val promise = Promise[Option[AsValue]]
 
-      m.client.get(m.eventLoops.next(), new RecordListener {
+      val listener = new RecordListener {
         override def onFailure(exception: AerospikeException) = promise.failure(exception)
 
         override def onSuccess(key: Key, record: Record) = promise.success(Option(record).map(AsValue.fromRecord))
-      }, m.policy.orNull, key, bins: _*)
+      }
+
+      if (bins.isEmpty) m.client.get(m.eventLoops.next(), listener, m.policy.orNull, key)
+      else m.client.get(m.eventLoops.next(), listener, m.policy.orNull, key, bins: _*)
 
       promise.future
     }
@@ -153,8 +162,7 @@ object KleisliInterpreter { module =>
     case ScanAll(ns, set, bins) => kleisli[Vector[(Key, AsValue)]] { m =>
       val promise = Promise[Vector[(Key, AsValue)]]()
 
-      m.client.scanAll(m.eventLoops.next(), new RecordSequenceListener {
-
+      val listener = new RecordSequenceListener {
         val results = Vector.newBuilder[(Key, AsValue)]
 
         override def onFailure(exception: AerospikeException): Unit = promise.failure(exception)
@@ -162,8 +170,10 @@ object KleisliInterpreter { module =>
         override def onRecord(key: Key, record: Record): Unit = results += (key -> AsValue.fromRecord(record))
 
         override def onSuccess(): Unit = promise.success(results.result())
+      }
 
-      }, m.scanPolicy.orNull, ns, set, bins: _*)
+      if (bins.isEmpty) m.client.scanAll(m.eventLoops.next(), listener, m.scanPolicy.orNull, ns, set)
+      else m.client.scanAll(m.eventLoops.next(), listener, m.scanPolicy.orNull, ns, set, bins: _*)
 
       promise.future
     }
@@ -171,8 +181,7 @@ object KleisliInterpreter { module =>
     case GetAll(keys, bins) => kleisli[Vector[(Key, AsValue)]] { m =>
       val promise = Promise[Vector[(Key, AsValue)]]()
 
-      m.client.get(m.eventLoops.next(), new RecordSequenceListener {
-
+      val listener = new RecordSequenceListener {
         val results = Vector.newBuilder[(Key, AsValue)]
 
         override def onFailure(exception: AerospikeException): Unit = promise.failure(exception)
@@ -180,8 +189,10 @@ object KleisliInterpreter { module =>
         override def onRecord(key: Key, record: Record): Unit = results += (key -> AsValue.fromRecord(record))
 
         override def onSuccess(): Unit = promise.success(results.result())
+      }
 
-      }, m.batchPolicy.orNull, keys.toArray, bins: _*)
+      if (bins.isEmpty) m.client.get(m.eventLoops.next(), listener, m.batchPolicy.orNull, keys.toArray)
+      else m.client.get(m.eventLoops.next(), listener, m.batchPolicy.orNull, keys.toArray, bins: _*)
 
       promise.future
     }
