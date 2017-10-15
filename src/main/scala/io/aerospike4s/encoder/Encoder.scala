@@ -18,22 +18,6 @@ object Encoder {
 
   def apply[A](implicit ev: Encoder[A]): Encoder[A] = ev
 
-  implicit val writerFunctor: Contravariant[Encoder] with Cartesian[Encoder] = new Contravariant[Encoder] with Cartesian[Encoder] {
-    override def contramap[A, B](fa: Encoder[A])(f: (B) => A) = new Encoder[B] {
-      override def apply[F[_]](implicit ev: EncoderAlgebra[F]) = {
-        ev.contramap(fa(ev))(f)
-      }
-    }
-
-    override def product[A, B](fa: Encoder[A], fb: Encoder[B]) = new Encoder[(A, B)] {
-      override def apply[F[_]](implicit ev: EncoderAlgebra[F]) = ev.product(fa(ev), fb(ev))
-    }
-  }
-
-  def field[A](path: String)(implicit next: Encoder[A]): Encoder[A] = new Encoder[A] {
-    override def apply[F[_]](implicit ev: EncoderAlgebra[F]): F[A] = ev.field(path)(next)
-  }
-
   implicit def opt[A](implicit next: Encoder[A]): Encoder[Option[A]] = new Encoder[Option[A]] {
     override def apply[F[_]](implicit ev: EncoderAlgebra[F]) = {
       ev.opt(next)
@@ -80,7 +64,7 @@ object Encoder {
     hDecoder: Lazy[Encoder[H]],
     tDecoder: Lazy[Encoder[T]]
   ): Encoder[FieldType[K, H] :: T] = {
-    (field(witness.value.name)(hDecoder.value), tDecoder.value).tupled.contramap[FieldType[K, H] :: T] { obj =>
+    (io.aerospike4s.encoder.field(witness.value.name)(hDecoder.value), tDecoder.value).tupled.contramap[FieldType[K, H] :: T] { obj =>
       (isHCons.head(obj), isHCons.tail(obj))
     }
   }
@@ -89,4 +73,16 @@ object Encoder {
     implicit gen: LabelledGeneric.Aux[A, Repr],
     hlistDecoder: Encoder[Repr]
   ): Encoder[A] = hlistDecoder.contramap(gen.to)
+
+  implicit val writerFunctor: Contravariant[Encoder] with Cartesian[Encoder] = new Contravariant[Encoder] with Cartesian[Encoder] {
+    override def contramap[A, B](fa: Encoder[A])(f: (B) => A) = new Encoder[B] {
+      override def apply[F[_]](implicit ev: EncoderAlgebra[F]) = {
+        ev.contramap(fa(ev))(f)
+      }
+    }
+
+    override def product[A, B](fa: Encoder[A], fb: Encoder[B]) = new Encoder[(A, B)] {
+      override def apply[F[_]](implicit ev: EncoderAlgebra[F]) = ev.product(fa(ev), fb(ev))
+    }
+  }
 }

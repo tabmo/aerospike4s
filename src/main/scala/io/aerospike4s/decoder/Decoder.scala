@@ -17,14 +17,6 @@ object Decoder {
 
   def apply[A](implicit ev: Decoder[A]): Decoder[A] = ev
 
-  def field[A](path: String)(implicit next: Decoder[A]): Decoder[A] = new Decoder[A] {
-    override def apply[F[_]](implicit ev: DecoderAlgebra[F]): F[A] = ev.field(path)(next)
-  }
-
-  def at[A](idx: Int)(implicit next: Decoder[A]): Decoder[A] = new Decoder[A] {
-    override def apply[F[_]](implicit ev: DecoderAlgebra[F]): F[A] = ev.at(idx)(next)
-  }
-
   implicit def decoderOpt[A](implicit next: Decoder[A]): Decoder[Option[A]] = new Decoder[Option[A]] {
     override def apply[F[_]](implicit ev: DecoderAlgebra[F]): F[Option[A]] = ev.opt(next)
   }
@@ -66,7 +58,7 @@ object Decoder {
   ): Decoder[FieldType[K, H] :: T] = {
     import cats.implicits._
     (
-      field[H](witness.value.name)(hDecoder.value),
+      io.aerospike4s.decoder.field[H](witness.value.name)(hDecoder.value),
       tDecoder.value
     ).mapN(shapeless.labelled.field[K](_) :: _)
   }
