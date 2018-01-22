@@ -2,8 +2,7 @@ package io.aerospike4s.encoder
 
 import com.aerospike.client.Value
 
-import cats.Cartesian
-import cats.functor.Contravariant
+import cats.{Contravariant, Semigroupal}
 import shapeless.labelled.FieldType
 import shapeless.ops.hlist.IsHCons
 import shapeless.{::, HList, HNil, LabelledGeneric, Lazy, Witness}
@@ -74,7 +73,7 @@ object Encoder {
     hlistDecoder: Encoder[Repr]
   ): Encoder[A] = hlistDecoder.contramap(gen.to)
 
-  implicit val writerFunctor: Contravariant[Encoder] with Cartesian[Encoder] = new Contravariant[Encoder] with Cartesian[Encoder] {
+  implicit val writerFunctor: Contravariant[Encoder] with Semigroupal[Encoder] = new Contravariant[Encoder] with Semigroupal[Encoder] {
     override def contramap[A, B](fa: Encoder[A])(f: (B) => A) = new Encoder[B] {
       override def apply[F[_]](implicit ev: EncoderAlgebra[F]) = {
         ev.contramap(fa(ev))(f)

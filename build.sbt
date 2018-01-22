@@ -29,9 +29,11 @@ lazy val root = (project in file(".")).
     organization := "io.tabmo",
     name := "aerospike4s",
     libraryDependencies += scalaTest % Test,
-    libraryDependencies += "org.typelevel" %% "cats-core" % "1.0.0-MF",
+    libraryDependencies += "org.typelevel" %% "cats-core" % "1.0.1",
+    libraryDependencies += "org.typelevel" %% "cats-effect" % "0.5",
     libraryDependencies += "com.aerospike" % "aerospike-client" % "4.0.8",
     libraryDependencies += "com.chuusai" %% "shapeless" % "2.3.2",
+    libraryDependencies += "org.reactivestreams" % "reactive-streams" % "1.0.2",
 
     /*
     * Publish to tabmo organization on bintray

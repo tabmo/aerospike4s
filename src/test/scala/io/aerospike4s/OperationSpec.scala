@@ -4,6 +4,8 @@ import com.aerospike.client.query.IndexType
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.{BeforeAndAfterAll, FlatSpec, GivenWhenThen, Matchers}
 
+import cats.effect.IO
+
 class OperationSpec extends FlatSpec with Matchers with BeforeAndAfterAll with GivenWhenThen with ScalaFutures {
 
   import scala.concurrent.ExecutionContext.Implicits.global
@@ -39,9 +41,7 @@ class OperationSpec extends FlatSpec with Matchers with BeforeAndAfterAll with G
       v <- get[TestValue](key)
     } yield v
 
-    whenReady(io.runFuture(manager)) { r =>
-      r should equal(Some(TestValue("with_prefix_value_with_suffix")))
-    }
+    io.run[IO](manager).unsafeRunSync should equal(Some(TestValue("with_prefix_value_with_suffix")))
   }
 
   "Add operation" should "work" in {
@@ -52,9 +52,7 @@ class OperationSpec extends FlatSpec with Matchers with BeforeAndAfterAll with G
       v <- get[LongValue](key)
     } yield v
 
-    whenReady(io.runFuture(manager)) { r =>
-      r should equal(Some(LongValue(3L)))
-    }
+    io.run[IO](manager).unsafeRunSync should equal(Some(LongValue(3L)))
   }
 
   "Delete operation" should "work" in {
@@ -65,9 +63,7 @@ class OperationSpec extends FlatSpec with Matchers with BeforeAndAfterAll with G
       v <- get[TestValue](key)
     } yield v
 
-    whenReady(io.runFuture(manager)) { r =>
-      r should equal(None)
-    }
+    io.run[IO](manager).unsafeRunSync should equal(None)
   }
 
   "Touch operation" should "work" in {
@@ -77,9 +73,7 @@ class OperationSpec extends FlatSpec with Matchers with BeforeAndAfterAll with G
       _ <- touch(key)
     } yield ()
 
-    whenReady(io.runFuture(manager)) { _ =>
-      ()
-    }
+    io.run[IO](manager).unsafeRunSync //throw exception on fail
   }
 
   "Header operation" should "work" in {
@@ -89,9 +83,7 @@ class OperationSpec extends FlatSpec with Matchers with BeforeAndAfterAll with G
       _ <- header(key)
     } yield ()
 
-    whenReady(io.runFuture(manager)) { _ =>
-      ()
-    }
+    io.run[IO](manager).unsafeRunSync //throw exception on fail
   }
 
   "Exists operation" should "work" in {
@@ -102,9 +94,7 @@ class OperationSpec extends FlatSpec with Matchers with BeforeAndAfterAll with G
       notExistsKey <- exists(TestSet.key("notexists"))
     } yield (existsKey, notExistsKey)
 
-    whenReady(io.runFuture(manager)) { r =>
-      r should equal((true, false))
-    }
+    io.run[IO](manager).unsafeRunSync should equal((true, false))
   }
 
   "Query statement operation" should "work" in {
@@ -117,11 +107,7 @@ class OperationSpec extends FlatSpec with Matchers with BeforeAndAfterAll with G
     } yield record.map(_._2)
 
 
-    whenReady(io.runFuture(manager)) { records =>
-      records should contain theSameElementsAs Seq(
-        TestValue("stmt1")
-      )
-    }
+    io.run[IO](manager).unsafeRunSync should contain theSameElementsAs Seq(TestValue("stmt1"))
   }
 
   "scan all operation" should "work" in {
@@ -133,13 +119,11 @@ class OperationSpec extends FlatSpec with Matchers with BeforeAndAfterAll with G
     } yield record.map(_._2)
 
 
-    whenReady(io.runFuture(manager)) { records =>
-      records should contain allElementsOf Seq(
-        TestValue("scan1"),
-        TestValue("scan2"),
-        TestValue("scan3")
-      )
-    }
+    io.run[IO](manager).unsafeRunSync should contain allElementsOf Seq(
+      TestValue("scan1"),
+      TestValue("scan2"),
+      TestValue("scan3")
+    )
   }
 
   "Get all operation" should "work" in {
@@ -152,12 +136,10 @@ class OperationSpec extends FlatSpec with Matchers with BeforeAndAfterAll with G
       record <- getAll[TestValue](Seq(key1, key2))
     } yield record.map(_._2)
 
-    whenReady(io.runFuture(manager)) { records =>
-      records should contain theSameElementsAs Seq(
-        TestValue("getall1"),
-        TestValue("getall2")
-      )
-    }
+    io.run[IO](manager).unsafeRunSync should contain theSameElementsAs Seq(
+      TestValue("getall1"),
+      TestValue("getall2")
+    )
   }
 
   "Create / Drop index operation" should "work" in {
@@ -166,9 +148,7 @@ class OperationSpec extends FlatSpec with Matchers with BeforeAndAfterAll with G
       _ <- dropIndex("test", "set", "test_set_id")
     } yield ()
 
-    whenReady(io.runFuture(manager)) { _ =>
-      ()
-    }
+    io.run[IO](manager).unsafeRunSync
   }
 
   "Operate operation" should "work" in {
@@ -180,9 +160,7 @@ class OperationSpec extends FlatSpec with Matchers with BeforeAndAfterAll with G
       ops.getAll
     )
 
-    whenReady(io.runFuture(manager)) { r =>
-      r should equal(Some(TestValue("with_prefix_value_with_suffix")))
-    }
+    io.run[IO](manager).unsafeRunSync should equal(Some(TestValue("with_prefix_value_with_suffix")))
   }
 
   case class Person(name: String, age: Int)
@@ -207,10 +185,6 @@ class OperationSpec extends FlatSpec with Matchers with BeforeAndAfterAll with G
       _ <- removeUdf("persons.lua")
     } yield r.map(_._2)
 
-    whenReady(io.runFuture(manager)) { r =>
-      r should contain theSameElementsAs Seq(
-        Person("Bob", 33)
-      )
-    }
+    io.run[IO](manager).unsafeRunSync should contain theSameElementsAs Seq(Person("Bob", 33))
   }
 }
