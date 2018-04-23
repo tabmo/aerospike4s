@@ -259,7 +259,7 @@ object KleisliInterpreter { module =>
       }
     }
 
-    case Pure(x) => Kleisli.lift(Future.successful(x))
+    case Pure(x) => Kleisli.liftF(Future.successful(x))
 
     case Join(opA, opB) =>
       kleisli { m =>
@@ -274,7 +274,7 @@ object KleisliInterpreter { module =>
     case Bind(x, f) =>
       module.apply(ec)(x).flatMap { a => module.apply(ec)(f(a)) }
 
-    case Fail(t) => Kleisli.lift(Future.failed(t))
+    case Fail(t) => Kleisli.liftF(Future.failed(t))
   }
 
 

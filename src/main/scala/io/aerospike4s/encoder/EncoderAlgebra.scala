@@ -1,11 +1,9 @@
 package io.aerospike4s.encoder
 
 import com.aerospike.client.Value
+import cats.{ Contravariant, Semigroupal}
 
-import cats.Cartesian
-import cats.functor.Contravariant
-
-trait EncoderAlgebra[F[_]] extends Contravariant[F] with Cartesian[F] {
+trait EncoderAlgebra[F[_]] extends Contravariant[F] with Semigroupal[F] {
   def field[A](field: String)(implicit next: Encoder[A]): F[A]
 
   def opt[A](next: Encoder[A]): F[Option[A]]
