@@ -24,7 +24,7 @@ lazy val root = (project in file(".")).
       "-language:experimental.macros"
     ),
 
-    addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.4"),
+    addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.6"),
 
     organization := "io.tabmo",
     name := "aerospike4s",
