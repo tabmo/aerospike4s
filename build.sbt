@@ -4,7 +4,7 @@ lazy val root = (project in file(".")).
   settings(
     inThisBuild(List(
       organization := "io.tabmo",
-      scalaVersion := "2.12.3",
+      scalaVersion := "2.12.5",
       version := "0.1.0-SNAPSHOT"
     )),
 
@@ -29,9 +29,9 @@ lazy val root = (project in file(".")).
     organization := "io.tabmo",
     name := "aerospike4s",
     libraryDependencies += scalaTest % Test,
-    libraryDependencies += "org.typelevel" %% "cats-core" % "1.0.0-MF",
-    libraryDependencies += "com.aerospike" % "aerospike-client" % "4.0.8",
-    libraryDependencies += "com.chuusai" %% "shapeless" % "2.3.2",
+    libraryDependencies += "org.typelevel" %% "cats-core" % "1.1.0",
+    libraryDependencies += "com.aerospike" % "aerospike-client" % "4.1.6",
+    libraryDependencies += "com.chuusai" %% "shapeless" % "2.3.3",
 
     /*
     * Publish to tabmo organization on bintray
