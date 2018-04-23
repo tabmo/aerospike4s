@@ -1,9 +1,7 @@
 package io.aerospike4s.encoder
 
 import com.aerospike.client.Value
-
-import cats.Cartesian
-import cats.functor.Contravariant
+import cats.{Contravariant, Semigroupal}
 import shapeless.labelled.FieldType
 import shapeless.ops.hlist.IsHCons
 import shapeless.{::, HList, HNil, LabelledGeneric, Lazy, Witness}
@@ -59,22 +57,22 @@ object Encoder {
   implicit def hnilDecoder: Encoder[HNil] = encoderNull.contramap(_ => HNil)
 
   implicit def hlistDecoder[K <: Symbol, H, T <: HList](
-    implicit witness: Witness.Aux[K],
-    isHCons: IsHCons.Aux[H :: T, H, T],
-    hDecoder: Lazy[Encoder[H]],
-    tDecoder: Lazy[Encoder[T]]
-  ): Encoder[FieldType[K, H] :: T] = {
+                                                         implicit witness: Witness.Aux[K],
+                                                         isHCons: IsHCons.Aux[H :: T, H, T],
+                                                         hDecoder: Lazy[Encoder[H]],
+                                                         tDecoder: Lazy[Encoder[T]]
+                                                       ): Encoder[FieldType[K, H] :: T] = {
     (io.aerospike4s.encoder.field(witness.value.name)(hDecoder.value), tDecoder.value).tupled.contramap[FieldType[K, H] :: T] { obj =>
       (isHCons.head(obj), isHCons.tail(obj))
     }
   }
 
   implicit def objectDecoder[A, Repr <: HList](
-    implicit gen: LabelledGeneric.Aux[A, Repr],
-    hlistDecoder: Encoder[Repr]
-  ): Encoder[A] = hlistDecoder.contramap(gen.to)
+                                                implicit gen: LabelledGeneric.Aux[A, Repr],
+                                                hlistDecoder: Encoder[Repr]
+                                              ): Encoder[A] = hlistDecoder.contramap(gen.to)
 
-  implicit val writerFunctor: Contravariant[Encoder] with Cartesian[Encoder] = new Contravariant[Encoder] with Cartesian[Encoder] {
+  implicit val writerFunctor: Contravariant[Encoder] with Semigroupal[Encoder] = new Contravariant[Encoder] with Semigroupal[Encoder] {
     override def contramap[A, B](fa: Encoder[A])(f: (B) => A) = new Encoder[B] {
       override def apply[F[_]](implicit ev: EncoderAlgebra[F]) = {
         ev.contramap(fa(ev))(f)
