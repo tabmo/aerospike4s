@@ -1,0 +1,9 @@
+version: '3'
+services:
+  aerospike:
+    image: aerospike/aerospike-server:3.15.1.4
+    ports :
+      - "3000:3000"
+      - "3001:3001"
+      - "3002:3002"
+      - "3003:3003"
